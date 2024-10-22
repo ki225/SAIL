@@ -1,3 +1,13 @@
+"""
+Purpose
+This Lambda function reads student responses from an Excel file stored in S3, analyzes the responses using AWS Bedrock, and generates topics for each question in the form.
+
+Input
+Excel file containing student responses
+
+Output
+Topics for each question in the form
+"""
 import json
 import boto3
 import openpyxl
@@ -15,7 +25,7 @@ def analyze_topics(questions):
     
     body = json.dumps({
         "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 150,
+        "max_tokens": 300,
         "messages": [
             {
                 "role": "user",
@@ -30,10 +40,13 @@ def analyze_topics(questions):
                         2. 簡要概述該問題所涉及的領域。
                         3. 列出此表單的學習目標。
                         
-                        請按照以下格式回覆:
-                        主題: [主題]
-                        概述: [概述]
-                        學習目標: [目標]
+                        
+                        請按照以下 JSON 格式回覆:
+                        {{
+                            '主題': '[主題]',
+                            '概述': '[概述]',
+                            "學習目標": '[目標]'
+                        }}
                         """
                     }
                 ]
@@ -47,9 +60,34 @@ def analyze_topics(questions):
     
     # get the topic and summary from the model response
     topic_text = response_body["content"][0]["text"]
-    print(f"Question: {questions}\nAnalysis: {topic_text}\n")
+    
+    # Clean and parse the topic text into JSON format
+    topic_analysis = None
+    print("original text: ", topic_text)
+    
+    try:
+        # 將字串中的單引號替換為雙引號，並去除多餘的換行符號
+        clean_text = topic_text.replace("\n", "").replace("'", "\"")
+        
+        # 確保清理後的字串符合 JSON 格式
+        if clean_text.startswith("{") and clean_text.endswith("}"):
+            topic_analysis = json.loads(clean_text)
+        else:
+            raise ValueError("Cleaned text is not a valid JSON object.")
+    
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        topic_analysis = {"error": "Invalid response format", "message": str(e)}
+    except ValueError as e:
+        print(f"Value Error: {e}")
+        topic_analysis = {"error": "Invalid response format", "message": str(e)}
+        
 
-    return topic_text
+    return topic_analysis
+
+def upload_to_s3(data, bucket_name, file_name):
+    """Upload the data to S3."""
+    s3.put_object(Bucket=bucket_name, Key=file_name, Body=json.dumps(data, ensure_ascii=False))  # 確保儲存為 UTF-8 編碼
 
 
 def lambda_handler(event, context):
@@ -63,9 +101,13 @@ def lambda_handler(event, context):
     
     # Extract the questions from the first row of the Excel sheet
     questions = [cell.value for cell in sheet[1]]
+    target_questions = questions[5:]
     
     # Perform topic analysis on all questions
-    topic_analysis_results = analyze_topics(questions)
+    topic_analysis_results = analyze_topics(target_questions)
+
+    print({'question_topics': topic_analysis_results})
+    upload_to_s3({'question_topics': topic_analysis_results}, "analysis-results-reports", "topic_analysis_results.json")
     
     return {
         'statusCode': 200,
