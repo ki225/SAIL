@@ -32,12 +32,12 @@ def analyze_responses(question, responses):
                             題目: {question}  
                             學生回答: {response}
                             
-                            請按照以下格式回覆：  [{stu_id}]: [評分] - [評分理由]
+                            請按照以下格式回覆：  `[{stu_id}]: [評分] - [評分理由]` 須包含中括號
 
                             規則：
-                                1. 根據學生回答的努力程度和正確性打分（0-10分）。
+                                1. 根據學生回答的努力程度和正確性打分（0-10）。
                                 2. 若有文不對題、回應不完整、攻擊性言詞、答題態度輕浮，則斟酌扣分。
-                                3. 評分理由請簡述。
+                                3. 評分理由請言簡意賅，在35字元內。
                             """
                         }
                     ]
@@ -53,6 +53,7 @@ def analyze_responses(question, responses):
         print(rate_result[stu_id])
 
     print("Rate Results: ", rate_result)
+
     return rate_result, insights
 
 def calculate_attendance(sheet, attendance_column_index):
@@ -65,6 +66,7 @@ def calculate_attendance(sheet, attendance_column_index):
     
     # Calculate absent students
     absent_students = [student_id for student_id in student_list if str(student_id) not in present_students]
+    
     return present_students, absent_students
 
 def lambda_handler(event, context):
@@ -90,6 +92,7 @@ def lambda_handler(event, context):
 
     # Calculate attendance (assuming attendance is in the 1st column, adjust index if needed)
     present_students, absent_students = calculate_attendance(sheet, attendance_column_index=0)
+    print(f"出席人數: {len(present_students)}")
     
     results = {}
     for target_question in questions[5:]:  # Skip metadata columns
