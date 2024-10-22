@@ -14,92 +14,6 @@ import boto3
 import openpyxl
 from io import BytesIO
 
-student_list = [
-    112502020,
-    113502002,
-    113502004,
-    113502005,
-    113502006,
-    113502008,
-    113502009,
-    113502010,
-    113502011,
-    113502012,
-    113502013,
-    113502015,
-    113502016,
-    113502017,
-    113502019,
-    113502021,
-    113502022,
-    113502024,
-    113502025,
-    113502026,
-    113502027,
-    113502028,
-    113502501,
-    113502502,
-    113502503,
-    113502504,
-    113502505,
-    113502506,
-    113502507,
-    113502508,
-    113502509,
-    113502510,
-    113502511,
-    113502512,
-    113502513,
-    113502514,
-    113502515,
-    113502517,
-    113502519,
-    113502520,
-    113502521,
-    113502522,
-    113502523,
-    113502524,
-    113502525,
-    113502526,
-    113502527,
-    113502528,
-    113502529,
-    113502530,
-    113502531,
-    113502532,
-    113502533,
-    113502534,
-    113502535,
-    113502536,
-    113502537,
-    113502538,
-    113502540,
-    113502541,
-    113502542,
-    113502543,
-    113502545,
-    113502546,
-    113502547,
-    113502548,
-    113502549,
-    113502551,
-    113502552,
-    113502553,
-    113502554,
-    113502555,
-    113502557,
-    113502559,
-    113502560,
-    113502566,
-    113502568,
-    113502569,
-    113502570,
-    113502571,
-    113502572,
-    113502573,
-    113502574,
-    113502576
-]
 
 
 # Initialize AWS clients
@@ -107,7 +21,7 @@ s3 = boto3.client('s3')
 bedrock = boto3.client('bedrock-runtime', region_name="us-east-1")
 
 
-def analyze_responses(question, responses, start_index=0):
+def analyze_responses(question, responses, start_index):
     """Use AWS Bedrock to analyze responses and generate scores and insights."""
     modelId = 'anthropic.claude-3-haiku-20240307-v1:0'
     accept = 'application/json'
@@ -122,10 +36,8 @@ def analyze_responses(question, responses, start_index=0):
         # 獲取當前批次的學生 ID 和回應
         batch = {stu_id: responses[stu_id] for stu_id in list(responses.keys())[i:i + batch_size]}
 
-        
-        for stu_id, response in batch.items():
-            # Prepare the request body for scoring
-            batch_responses = "\n".join([f"學生ID: {stu_id}, 回覆: {response}" for stu_id, response in batch.items()])
+        # Prepare the request body for scoring
+        batch_responses = "\n".join([f"學生ID: {stu_id}, 回覆: {response}" for stu_id, response in batch.items()])
 
         scoring_body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
@@ -174,9 +86,8 @@ def analyze_responses(question, responses, start_index=0):
         except Exception as e:
             print(f"Error encountered: {e}\nthe text is : {clean_lst}")
             print(f"Retrying Bedrock request from {i}...")
-            return start_index
+            return rate_result + analyze_responses(question, responses, i) # rate_result is original list, so we need to add the new result to it.
 
-        
     print("Rate Results: ", rate_result)    
     return rate_result # [json1, json2, ...]
 
@@ -229,10 +140,7 @@ def lambda_handler(event, context):
                                        if target_question in responses}
                                        
 
-        scores_list = analyze_responses(target_question, specific_question_responses) # [json1, json2, ...]
-        # if return value is not a list, retry the request
-        if not isinstance(scores_list, list):
-            scores_list = analyze_responses(target_question, specific_question_responses, start_index=scores_list)
+        scores_list = analyze_responses(target_question, specific_question_responses, 0) # [json1, json2, ...]
         results[target_question] = scores_list
 
     upload_to_s3(results, "analysis-results-reports", "student-response-evaluation.json")

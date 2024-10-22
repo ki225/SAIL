@@ -2,3 +2,9 @@ json
 boto3
 openpyxl
 io
+plotly
+google-auth
+google-api-python-client
+googleapiclient
+google-auth-httplib2 
+google-auth-oauthlib
