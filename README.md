@@ -2,6 +2,8 @@
 
 SAIL is an innovative, AI-powered educational analytics platform designed to revolutionize form-based learning assessment. By harnessing advanced natural language processing and machine learning techniques, SAIL effortlessly analyzes diverse forms and questionnaires, providing deep insights into student engagement, comprehension, and performance.
 
+![](img/SAIL-logo.png)
+
 Key Features:
 - Adaptive analysis of any form type
 - Intelligent attendance tracking
