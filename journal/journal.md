@@ -17,3 +17,9 @@ TO-DO
 Wish
 - 有個介面可以顯示特定資料夾下所有的表單，點選該表單後就會開始執行分析
 - 但應該不可能
+
+### 2024/10/13
+Task
+- 建 GCP 帳號跟相關 API 與權限設定
+- 試了一大堆方法包括 Google App Script 和 Coze API，但 Coze API 免費次數只有三十次超少
+- 在最後找到這個教程 https://www.analyticsvidhya.com/blog/2020/07/read-and-update-google-spreadsheets-with-python/

@@ -1,2 +1,6 @@
 functions/StudentResponseEvaluation/student_list.py
 testvenv/
+test/AutomateGoogleSheets/service_acc_key.json
+test/GoogleAPICallingExample/token.json
+test/GoogleAPICallingExample/credentials.json
+test/credentials.json
