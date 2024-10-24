@@ -29,15 +29,21 @@ print(sheet_instance.col_count)
 print(sheet_instance.cell(col=3,row=2))
 ## >> <Cell R2C3 '63881'>
 
+# print cell A1:G1
+print(sheet_instance.row_values(1))
+
+# print cell A1:G6
+print(sheet_instance.get_all_values())
+
 
 # get all the records of the data
 records_data = sheet_instance.get_all_records()
 
-# view the data
-print(records_data)
+# # view the data
+# print(records_data)
 
-# convert the json to dataframe
-records_df = pd.DataFrame.from_dict(records_data)
+# # convert the json to dataframe
+# records_df = pd.DataFrame.from_dict(records_data)
 
-# view the top records
-print(records_df.head())
+# # view the top records
+# print(records_df.head())
