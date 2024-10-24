@@ -16,7 +16,7 @@ def get_sheets_service():
     secrets = boto3.client('secretsmanager')
     credentials_json = json.loads(
         secrets.get_secret_value(
-            SecretId='google-service-account-key'
+            SecretId='google_service_account_key'
         )['SecretString']
     )
 
