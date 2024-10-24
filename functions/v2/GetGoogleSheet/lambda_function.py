@@ -3,24 +3,34 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import json
 import boto3
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 def get_sheets_service():
     """建立並返回Google Sheets API服務"""
-    SCOPES = ['https://www.googleapis.com/auth/drive.readonly',
-              'https://www.googleapis.com/auth/spreadsheets.readonly']
+    SCOPES = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
     
     # 從AWS Secrets Manager獲取服務帳號憑證
+    # credentials = ServiceAccountCredentials.from_json_keyfile_name('service_acc_key.json', scope)
     secrets = boto3.client('secretsmanager')
     credentials_json = json.loads(
         secrets.get_secret_value(
             SecretId='google-service-account-key'
         )['SecretString']
     )
+
+    
     
     credentials = service_account.Credentials.from_service_account_info(
         credentials_json, scopes=SCOPES)
     
-    return build('sheets', 'v4', credentials=credentials)
+    client = gspread.authorize(credentials)
+    sheet = client.open('sc0003r-1')
+    sheet_instance = sheet.get_worksheet(0)
+    
+    return sheet_instance
+    # return build('sheets', 'v4', credentials=credentials)
 
 def get_drive_service():
     """建立並返回Google Drive API服務"""
