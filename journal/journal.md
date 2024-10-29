@@ -1,4 +1,4 @@
-# SAIL
+# SAIL progress
 ### 2024/10/20
 Task
 - 發想題目，設計流程
@@ -23,3 +23,15 @@ Task
 - 建 GCP 帳號跟相關 API 與權限設定
 - 試了一大堆方法包括 Google App Script 和 Coze API，但 Coze API 免費次數只有三十次超少
 - 在最後找到這個教程 https://www.analyticsvidhya.com/blog/2020/07/read-and-update-google-spreadsheets-with-python/
+
+### 2024/10/29
+Problem
+- 怎麼一個禮拜回來後，Bedrock 就爆掉了....
+- link: 
+  - https://www.reddit.com/r/aws/comments/1gb2zx2/amazon_bedrock_prompt_management_error_too_many/
+  - https://repost.aws/questions/QUK8qnLwJRQhOPV58H0sC41Q/bedrock-too-many-requests-please-wait-before-trying-again
+
+Task
+- 用 SDK 跟 API 拿 Google Sheet
+- 拿 Gemini 先墊當作 bedrock ...
+- 今天寫的在 function/v3

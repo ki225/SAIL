@@ -4,3 +4,8 @@ test/AutomateGoogleSheets/service_acc_key.json
 test/GoogleAPICallingExample/token.json
 test/GoogleAPICallingExample/credentials.json
 test/credentials.json
+/venv_lib/
+functions/v3/__pycache__/
+functions/v3/service_acc_key.json
+functions/v3/.env
+functions/v3/student_list.py

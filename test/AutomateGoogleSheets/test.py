@@ -2,15 +2,17 @@
 #!pip3 install --upgrade google-api-python-client oauth2client
 
 #importing the required libraries
-import gspread
-import pandas as pd
+
+# import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
+import gspread
+
 
 # define the scope of the application and add the JSON file with the credentials to access the API.
 scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 
 # add credentials to the account
-creds = ServiceAccountCredentials.from_json_keyfile_name('service_acc_key.json', scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name('test\AutomateGoogleSheets\service_acc_key.json', scope)
 
 # authorize the clientsheet 
 client = gspread.authorize(creds)
@@ -26,7 +28,7 @@ sheet_instance = sheet.get_worksheet(0)
 print(sheet_instance.col_count)
 
 # get the value at the specific cell
-print(sheet_instance.cell(col=3,row=2))
+# print(sheet_instance.cell(col=3,row=2))
 ## >> <Cell R2C3 '63881'>
 
 # print cell A1:G1
