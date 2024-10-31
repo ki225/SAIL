@@ -1,36 +1,37 @@
 import json
-from stu_response import json_data
+async def main(args: Args):
+    params = args.params
+    data = json.loads(params['json_input']) 
 
-data = json.loads(json_data) 
-
-# 初始化要輸出的結果物件
-ret = {
-    "questions": [],
-    "all_responses": []
-}
-
-# 取得問題列表 (假設位於 `sheet` 的第一列)
-header = data["sheet"][0][5:]  # 從第6個欄位開始是問題
-ret["questions"] = header
-
-# 對每一問題提取所有學生的回覆
-for i, question in enumerate(header):
-    # 針對當前問題初始化
-    question_responses = {
-        "question": question,
-        "student_responses": []
+    ret = {
+        "questions": [],
+        "all_responses": [],
+        "attendence_list": []
     }
 
-    # 讀取學生的每一列回覆
-    for row in data["sheet"][1:]:  # 跳過標題列
-        student_response = {
-            "student_id": row[4],  # 使用學號作為 ID
-            "student_response": row[i + 5]  # 回覆在第6個欄位之後
-        }
-        question_responses["student_responses"].append(student_response)
-    
-    # 加入到結果的 all_responses
-    ret["all_responses"].append(question_responses)
+    # get the questions from the first row
+    header = data["sheet"][0][5:]  # the first 5 columns are not questions
+    ret["questions"] = header
 
-# 查看輸出的結果
-print(json.dumps(ret, ensure_ascii=False, indent=4))
+    # get the student responses for each question
+    for i, question in enumerate(header):
+        question_responses = {
+            "question": question,
+            "student_responses": []
+        }
+
+        # read each row and extract the student response
+        for row in data["sheet"][1:]:  # skip the first row
+            if row[4] not in ret["attendence_list"]:
+                ret["attendence_list"].append(row[4])
+            student_response = {
+                "student_id": row[4],  # student ID is in the 5th column
+                "student_response": row[i + 5]  
+            }
+            question_responses["student_responses"].append(student_response)
+        
+        # append the responses for this question
+        ret["all_responses"].append(question_responses)
+
+    # print(json.dumps(ret, ensure_ascii=False, indent=4))
+    return ret
