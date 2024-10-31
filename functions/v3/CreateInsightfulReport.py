@@ -27,9 +27,26 @@ API_KEY = os.getenv('API_KEY')
 genai.configure(api_key = API_KEY)
 
 def send_message_to_chatbot(message):
-    model = genai.GenerativeModel('gemini-pro')
+    region = "us-central1"
+    model = genai.GenerativeModel(model_name='gemini-pro')
     response = model.generate_content(message)
     return response.text
+
+def extract_json_from_text(original_text):
+    print("original text: ", original_text)
+    
+    try:
+        clean_text = original_text.replace("\n", "").replace("'", "\"").replace("`", "").replace("json", "")        
+        if clean_text.startswith("{") and clean_text.endswith("}"):
+            json_text = json.loads(clean_text)
+        else:
+            raise ValueError("Cleaned text is not a valid JSON object.")
+    except Exception as e:
+        print(f"Error encountered: {e}\nthe text is : {clean_text}")
+        print("Retrying Bedrock request...")
+        return ""
+    return json_text
+
 
 
 def analyze_all_responses_for_insight(question, all_responses):
@@ -64,35 +81,13 @@ def analyze_all_responses_for_insight(question, all_responses):
    
     # Invoke the model for insight analysis
     insight_response = send_message_to_chatbot(prompt)
-    
-    # original_text = insight_response_body["content"][0]["text"]
-    
-    # # Clean and parse the topic text into JSON format
-    # insight_report = None
-    # print("original text: ", original_text)
-    
-    # try:
-    #     # 將字串中的單引號替換為雙引號，並去除多餘的換行符號
-    #     clean_text = original_text.replace("\n", "").replace("'", "\"")
-    #     print(clean_text)
-        
-    #     # 確保清理後的字串符合 JSON 格式
-    #     if clean_text.startswith("{") and clean_text.endswith("}"):
-    #         insight_report = json.loads(clean_text)
-    #     else:
-    #         raise ValueError("Cleaned text is not a valid JSON object.")
-    
-    # except json.JSONDecodeError as e:
-    #     print(f"Error decoding JSON: {e}")
-    #     insight_report = {"error": "Invalid response format", "message": str(e)}
-    # except ValueError as e:
-    #     print(f"Value Error: {e}")
-    #     insight_report = {"error": "Invalid response format", "message": str(e)}
-
-    # print(f"Question: {question}")
-    # print("Combined Insight Report: ", insight_report)
-    
-    return insight_response
+    insight_report = extract_json_from_text(insight_response)
+    if insight_report:
+        print(f"Question: {question}")
+        print("Combined Insight Report: ", insight_report)
+        return insight_response
+    else:
+        return analyze_all_responses_for_insight(question, all_responses)
 
 
 def suggest_chart_types_based_on_insight(insight_report):
@@ -163,5 +158,9 @@ def lambda_handler(event, context):
         insight_results[target_question] = insights
 
         chart_suggestions[target_question] = suggest_chart_types_based_on_insight(str(insights))
-        
+    
+    print("Insight Results: ", insight_results)
+    print("Chart Suggestions: ", chart_suggestions)
+    return insight_results, chart_suggestions
+
 lambda_handler(None, None)
