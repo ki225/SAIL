@@ -35,3 +35,15 @@ Task
 - 用 SDK 跟 API 拿 Google Sheet
 - 拿 Gemini 先墊當作 bedrock ...
 - 今天寫的在 function/v3
+- 建了 AWS API gateway 和 lambda 拿來呼叫，不然直接把金鑰什麼的直接寫進程式再跑超級危險 TAT
+
+### 2024/10/30
+Task
+- Gemini 也用到上限了 QWQ
+- 聽了老師建議用 Dify 看看，所以裝了 Docker, Ollema 那些的
+- 結果就是 Dify 比 Coze 還難用，原地回去 Coze
+
+### 2024/10/31
+Task
+- 用 Coze 吧，一直修 prompt，還有想辦法用有限的工具去實現我要的功能
+- 寫一點點 code 去做功能
