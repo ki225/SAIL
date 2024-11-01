@@ -14,21 +14,33 @@ import boto3
 import openpyxl
 from io import BytesIO
 
-
-
 # Initialize AWS clients
 s3 = boto3.client('s3')
 bedrock = boto3.client('bedrock-runtime', region_name="us-east-1")
 
+def exteact_str_to_json(original_text):
+    clean_text = original_text.replace("\n", "").replace("'", "\"") # string format
+    rate_result = []
+    try:
+        if clean_text.startswith("{") and clean_text.endswith("}"):
+            clean_text = clean_text.replace('},','}},')
+            clean_lst = clean_text.split('},')
+            # turn str to dict
+            rate_result_list = [json.loads(i) for i in clean_lst]
+            rate_result.extend(rate_result_list) 
+        else:
+            raise ValueError("Cleaned text is not a valid JSON object.")        
+    except Exception as e:
+        print(f"Error encountered: {e}\nthe text is : {clean_lst}")
+        return None
+    return rate_result
 
 def analyze_responses(question, responses, start_index):
     """Use AWS Bedrock to analyze responses and generate scores and insights."""
     modelId = 'anthropic.claude-3-haiku-20240307-v1:0'
     accept = 'application/json'
     contentType = 'application/json'
-
     rate_result = []
-    
     batch_size = 7
 
     for i in range(start_index, len(responses.items()), batch_size):
@@ -70,25 +82,14 @@ def analyze_responses(question, responses, start_index):
         # Invoke the model for scoring
         scoring_response = bedrock.invoke_model(body=scoring_body, modelId=modelId, accept=accept, contentType=contentType)
         scoring_response_body = json.loads(scoring_response.get('body').read())
-
         
         clean_text = scoring_response_body["content"][0]["text"].replace("\n", "").replace("'", "\"") # string format
-        try:
-            if clean_text.startswith("{") and clean_text.endswith("}"):
-                clean_text = clean_text.replace('},','}},')
-                clean_lst = clean_text.split('},')
-                # turn str to dict
-                rate_result_list = [json.loads(i) for i in clean_lst]
-                rate_result.extend(rate_result_list) 
-            else:
-                raise ValueError("Cleaned text is not a valid JSON object.")
-            
-        except Exception as e:
-            print(f"Error encountered: {e}\nthe text is : {clean_lst}")
+        extract_result = exteact_str_to_json(clean_text)
+        if extract_result:
+            rate_result.extend(extract_result)
+        else:
             print(f"Retrying Bedrock request from {i}...")
             return rate_result + analyze_responses(question, responses, i) # rate_result is original list, so we need to add the new result to it.
-
-    print("Rate Results: ", rate_result)    
     return rate_result # [json1, json2, ...]
 
 def calculate_attendance(sheet, attendance_column_index):
@@ -98,7 +99,6 @@ def calculate_attendance(sheet, attendance_column_index):
         if row[attendance_column_index]:  # Check if attendance is marked (assuming non-empty means present)
             student_id = str(row[4])[:9]  # Ensure student_id is a string
             present_students.add(student_id)
-    
     # Calculate absent students
     absent_students = [student_id for student_id in student_list if str(student_id) not in present_students]
     
