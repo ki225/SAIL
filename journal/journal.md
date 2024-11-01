@@ -18,7 +18,7 @@ Wish
 - 有個介面可以顯示特定資料夾下所有的表單，點選該表單後就會開始執行分析
 - 但應該不可能
 
-### 2024/10/13
+### 2024/10/23
 Task
 - 建 GCP 帳號跟相關 API 與權限設定
 - 試了一大堆方法包括 Google App Script 和 Coze API，但 Coze API 免費次數只有三十次超少
@@ -27,6 +27,18 @@ Task
 ### 2024/10/29
 Problem
 - 怎麼一個禮拜回來後，Bedrock 就爆掉了....
+  - 我以為可以解，解果失敗 OAO
+    - https://github.com/boto/botocore/issues/882#issuecomment-338846339
+    - https://stackoverflow.com/questions/55016714/an-error-occurred-throttlingexception-when-calling-the-getdeployment-operation
+    ```py
+    # original problem: throttlingexception
+    # an error occurred (throttlingexception) when calling the invokemodel operation (reached max retries: 4): too many requests, please wait before trying again. you have sent too many requests. wait before trying again.\"}"
+    config = Config(
+        retries = dict(
+            max_attempts = 10 # manually change 
+        )
+    )
+    ```
 - link: 
   - https://www.reddit.com/r/aws/comments/1gb2zx2/amazon_bedrock_prompt_management_error_too_many/
   - https://repost.aws/questions/QUK8qnLwJRQhOPV58H0sC41Q/bedrock-too-many-requests-please-wait-before-trying-again
@@ -47,3 +59,15 @@ Task
 Task
 - 用 Coze 吧，一直修 prompt，還有想辦法用有限的工具去實現我要的功能
 - 寫一點點 code 去做功能
+
+### 2024/11/1
+Task
+- 流程用完了，因為是用便宜的模型，且為了確保資料完整度所以批量處理
+- Coze 做了 JSON 格式輸入輸出控管真的很優秀，就不用手動用 code 在那邊做文字處理 T ~ T
+- 可以把結果寫到 Google Sheet 上面了
+- 小缺點是圖表分析超級無敵醜，那個 plugin 做出來的圖真的很醜 QwQ
+- 對於分析完整度可能只有模型升級可以用，反正就是錢來湊就對了
+- 重新整理了文檔內容，v1 和 v2 基本上用不到，但我想說以後 AWS bedrock 復甦後我可以回來參考。
+  - 不過 v2 的 GetGoogleSheet 還有在用，他放在 AWS lambda
+  - v3 就是一堆放在 Coze 上的 functions
+- ps test 資料夾是我拿來測試用的，主要是上禮拜測 curl HTTP 的時候用的

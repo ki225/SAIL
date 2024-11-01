@@ -16,6 +16,24 @@ from io import BytesIO
 s3 = boto3.client('s3')
 bedrock = boto3.client('bedrock-runtime', region_name="us-east-1")
 
+def exteact_str_to_json(original_text):
+    print("original text: ", original_text)    
+    try:
+        clean_text = original_text.replace("\n", "").replace("'", "\"")
+        print(clean_text)
+        
+        if clean_text.startswith("{") and clean_text.endswith("}"):
+            json_response = json.loads(clean_text)
+        else:
+            raise ValueError("Cleaned text is not a valid JSON object.")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        json_response = {"error": "Invalid response format", "message": str(e)}
+    except ValueError as e:
+        print(f"Value Error: {e}")
+        json_response = {"error": "Invalid response format", "message": str(e)}
+    return json_response
+
 def analyze_topics(questions):
     """ Perform text analysis on each question in the form to identify the topics being discussed """
 
@@ -60,29 +78,11 @@ def analyze_topics(questions):
     
     # get the topic and summary from the model response
     topic_text = response_body["content"][0]["text"]
-    
+
     # Clean and parse the topic text into JSON format
     topic_analysis = None
     print("original text: ", topic_text)
-    
-    try:
-        # 將字串中的單引號替換為雙引號，並去除多餘的換行符號
-        clean_text = topic_text.replace("\n", "").replace("'", "\"")
-        
-        # 確保清理後的字串符合 JSON 格式
-        if clean_text.startswith("{") and clean_text.endswith("}"):
-            topic_analysis = json.loads(clean_text)
-        else:
-            raise ValueError("Cleaned text is not a valid JSON object.")
-    
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
-        topic_analysis = {"error": "Invalid response format", "message": str(e)}
-    except ValueError as e:
-        print(f"Value Error: {e}")
-        topic_analysis = {"error": "Invalid response format", "message": str(e)}
-        
-
+    topic_analysis = exteact_str_to_json(topic_text)
     return topic_analysis
 
 def upload_to_s3(data, bucket_name, file_name):

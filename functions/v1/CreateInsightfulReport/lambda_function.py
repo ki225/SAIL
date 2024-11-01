@@ -17,6 +17,25 @@ import openpyxl
 s3 = boto3.client('s3')
 bedrock = boto3.client('bedrock-runtime', region_name="us-east-1")
 
+def exteact_str_to_json(original_text):
+    print("original text: ", original_text)    
+    try:
+        clean_text = original_text.replace("\n", "").replace("'", "\"")
+        print(clean_text)
+        
+        if clean_text.startswith("{") and clean_text.endswith("}"):
+            json_response = json.loads(clean_text)
+        else:
+            raise ValueError("Cleaned text is not a valid JSON object.")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+        json_response = {"error": "Invalid response format", "message": str(e)}
+    except ValueError as e:
+        print(f"Value Error: {e}")
+        json_response = {"error": "Invalid response format", "message": str(e)}
+    return json_response
+
+
 def analyze_all_responses_for_insight(question, all_responses):
     """Use AWS Bedrock to analyze all responses together and generate a single insight report."""
     
@@ -77,32 +96,13 @@ def analyze_all_responses_for_insight(question, all_responses):
     
     # Extract the combined insight report
     original_text = insight_response_body["content"][0]["text"]
-    
     # Clean and parse the topic text into JSON format
     insight_report = None
-    print("original text: ", original_text)
+    insight_report = exteact_str_to_json(original_text)
     
-    try:
-        # 將字串中的單引號替換為雙引號，並去除多餘的換行符號
-        clean_text = original_text.replace("\n", "").replace("'", "\"")
-        print(clean_text)
-        
-        # 確保清理後的字串符合 JSON 格式
-        if clean_text.startswith("{") and clean_text.endswith("}"):
-            insight_report = json.loads(clean_text)
-        else:
-            raise ValueError("Cleaned text is not a valid JSON object.")
-    
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
-        insight_report = {"error": "Invalid response format", "message": str(e)}
-    except ValueError as e:
-        print(f"Value Error: {e}")
-        insight_report = {"error": "Invalid response format", "message": str(e)}
 
     print(f"Question: {question}")
     print("Combined Insight Report: ", insight_report)
-    
     return insight_report
 
 
@@ -137,7 +137,7 @@ def suggest_chart_types_based_on_insight(insight_report):
         ]
     })
 
-    # 調用模型以生成圖表建議
+    # call the model to generate chart suggestions
     chart_suggestion_response = bedrock.invoke_model(
         body=chart_suggestion_body,
         modelId=modelId,
@@ -146,9 +146,8 @@ def suggest_chart_types_based_on_insight(insight_report):
     )
     chart_suggestion_response_body = json.loads(chart_suggestion_response.get('body').read())
     
-    # 提取圖表建議
+    # Extract the chart suggestions
     chart_suggestions = chart_suggestion_response_body["content"][0]["text"]
-
     print("Chart Suggestions: ", chart_suggestions)
     return chart_suggestions
 
@@ -175,6 +174,7 @@ def lambda_handler(event, context):
     insight_results = {}
     chart_suggestions = {}
 
+    # Analyze responses for each question
     for target_question in questions[5:]:  
         specific_question_responses = {student_id: responses[target_question]
                                        for student_id, responses in student_responses.items()
@@ -183,7 +183,6 @@ def lambda_handler(event, context):
         # Generate a combined insight report for all student responses to the current question
         insights = analyze_all_responses_for_insight(target_question, specific_question_responses)
         insight_results[target_question] = insights
-
         chart_suggestions[target_question] = suggest_chart_types_based_on_insight(str(insights))
         
     upload_to_s3({'insight_report': insight_results, 'chart_suggestions': chart_suggestions}, "analysis-results-reports", "insight_analysis_results.json")
